@@ -1,0 +1,19 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - $(aws ecr get-login --no-include-email --region $AWS_DEFAULT_REGION)
+  build:
+    commands:
+      - echo Build started on `date`
+      - echo Building the Docker images...
+      - echo AWS_ACCOUNT_ID=$AWS_ACCOUNT_ID
+      - echo AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION
+      - docker-compose build
+  post_build:
+    commands:
+      - echo Build completed on `date`
+      - echo Pushing docker images to registry...
+      - docker-compose push

@@ -1,0 +1,34 @@
+version: '3.7'
+services:
+  impactly-api:
+    image: $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/impactly-api:latest
+    container_name: "impactly-api"
+    hostname: impactly-api
+    environment:
+      - ASPNETCORE_URLS=http://*:80
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Production}
+      - JWTConfig__SECRET=$JWTConfig__SECRET
+      - DOTNET_gcServer=1
+      - DOTNET_gcConcurrent=1
+    ports:
+      - "80:80"
+      - "443:443"
+    build:
+      context: API
+      dockerfile: Dockerfile
+    deploy:
+      resources:
+        reservations:
+          cpus: '0.5'
+    healthcheck:
+      test: ["CMD", "/usr/bin/curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

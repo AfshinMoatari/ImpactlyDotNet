@@ -1,0 +1,51 @@
+#!/bin/bash
+production_branch='master'
+staging_branch='staging'
+current_branch=$(git symbolic-ref HEAD | sed -e 's,.*/\(.*\),\1,')
+RED='\033[0;31m'
+GREEN='\033[1;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[1;34m'
+NC='\033[0m' # No Color
+
+
+print() {
+    echo -e "$2$1${NC}"
+}
+
+
+print "Running pre push check..." $BLUE
+
+if [[ $current_branch != "$production_branch" && $current_branch != "$staging_branch" ]] ; then
+    print "Pre-push check skipped for branch \"$current_branch\"" $GREEN
+    exit 0
+fi
+
+
+# Run test script
+sh scripts/test.sh
+
+rc=$?
+if [[ $rc != 0 ]] ; then
+    print "Test script failed, please fix and push again" $RED
+    sh scripts/clear.sh
+    exit $rc
+fi
+print "Test succeeded!"
+
+# Run code coverage analyze script
+sh scripts/analyze.sh
+
+rc=$?
+if [[ $rc != 0 ]] ; then
+    print "Code coverage check failed, please ensure at least 80% code coverage" $RED
+    sh scripts/clear.sh
+    exit $rc
+fi
+print "Code coverage check succeeded!"
+
+# Clear test results
+sh scripts/clear.sh
+
+print "Pre-push check passed!" $GREEN
+exit 0
